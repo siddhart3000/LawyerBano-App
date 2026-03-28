@@ -1,0 +1,126 @@
+{
+  "types_of_law": [
+    {
+      "title": "Criminal Law",
+      "icon": "gavel",
+      "color": "0xFF7B91B0",
+      "points": [
+        "Prosecution & defense of crimes",
+        "Cybercrime & financial offenses",
+        "White-collar investigations",
+        "Sentencing & appeals"
+      ]
+    },
+    {
+      "title": "Environmental Law",
+      "icon": "eco",
+      "color": "0xFFE89B84",
+      "points": [
+        "Climate regulations",
+        "ESG compliance",
+        "Pollution control",
+        "Renewable energy policy"
+      ]
+    },
+    {
+      "title": "Civil Law",
+      "icon": "balance",
+      "color": "0xFF9BC4A3",
+      "points": [
+        "Contract disputes",
+        "Property litigation",
+        "Personal injury claims",
+        "Mediation & ADR"
+      ]
+    },
+    {
+      "title": "Family Law",
+      "icon": "family_restroom",
+      "color": "0xFFE8C07D",
+      "points": [
+        "Divorce & custody",
+        "Adoption laws",
+        "Domestic violence protection",
+        "Property division"
+      ]
+    },
+    {
+      "title": "Corporate Law",
+      "icon": "business",
+      "color": "0xFFC4A3C4",
+      "points": [
+        "Mergers & acquisitions",
+        "Corporate governance",
+        "Compliance & risk management",
+        "Securities law"
+      ]
+    },
+    {
+      "title": "Labour & Employment Law",
+      "icon": "work",
+      "color": "0xFFD4A5D4",
+      "points": [
+        "Employment contracts",
+        "Workplace discrimination",
+        "Wage disputes",
+        "Gig economy regulation"
+      ]
+    },
+    {
+      "title": "Constitutional Law",
+      "icon": "account_balance",
+      "color": "0xFFE8D4A5",
+      "points": [
+        "Fundamental rights",
+        "Judicial review",
+        "Public interest litigation",
+        "Constitutional interpretation"
+      ]
+    },
+    {
+      "title": "Tax Law",
+      "icon": "receipt_long",
+      "color": "0xFF84B0B0",
+      "points": [
+        "Corporate tax planning",
+        "GST/VAT compliance",
+        "International taxation",
+        "Tax litigation"
+      ]
+    },
+    {
+      "title": "Intellectual Property Law",
+      "icon": "copyright",
+      "color": "0xFF91B0B0",
+      "points": [
+        "Patents & Trademarks",
+        "Copyright protection",
+        "Digital content rights",
+        "IP licensing"
+      ]
+    },
+    {
+      "title": "International Law",
+      "icon": "public",
+      "color": "0xFFB09191",
+      "points": [
+        "Trade law",
+        "Human rights",
+        "Cross-border arbitration",
+        "Treaty law"
+      ]
+    }
+  ],
+  "other_categories": [
+    {
+      "title": "Legal Documentation",
+      "description": "Drafting contracts, wills, and affidavits.",
+      "icon": "description"
+    },
+    {
+      "title": "Court Procedures",
+      "description": "Understanding the hierarchy and processes of Indian Courts.",
+      "icon": "gavel"
+    }
+  ]
+}
