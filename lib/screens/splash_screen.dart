@@ -20,14 +20,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    // Faster animation (1 second)
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
     _controller.forward();
     _navigateToNext();
   }
 
   _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
+    // Reduced total splash time to 1.5 seconds for a snappy feel
+    await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
     final user = FirebaseAuth.instance.currentUser;
@@ -64,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
-          color: Color(0xFF3F2B96),
+          color: Color(0xFF3F2B96), // Matches the professional purple theme
         ),
         child: Center(
           child: FadeTransition(
@@ -74,41 +76,49 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               children: [
                 // USING ACTUAL ASSET LOGO
                 Container(
-                  width: 150,
-                  height: 150,
+                  width: 140,
+                  height: 140,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       )
                     ],
                   ),
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(18),
                   child: Image.asset('assets/images/logo.png'),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 32),
                 const Text(
                   'LAWYERBANO',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 3,
                   ),
                 ),
                 const Text(
-                  'Your Legal Companion',
+                  'Your Legal Intelligence Companion',
                   style: TextStyle(
                     color: Colors.white70,
-                    fontSize: 16,
+                    fontSize: 15,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 50),
-                const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white54)),
+                const SizedBox(height: 60),
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white38),
+                  ),
+                ),
               ],
             ),
           ),

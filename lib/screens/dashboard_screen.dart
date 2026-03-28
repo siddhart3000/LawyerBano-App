@@ -53,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshData(); // Auto-refresh when app comes to foreground
+      _refreshData();
     }
   }
 
@@ -295,8 +295,8 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                                   if (result == true) _refreshData();
                                 }),
                               _buildLuxuryCategoryCard(
-                                TranslationService.translate('hire_lawyer', effectiveLang),
-                                "Secure top legal counsel...",
+                                widget.isLawyer ? TranslationService.translate('consult_lawyer', effectiveLang) : TranslationService.translate('hire_lawyer', effectiveLang),
+                                widget.isLawyer ? "Consult with colleagues..." : "Secure top legal counsel...",
                                 Icons.person_add_rounded,
                                 0.1,
                                 () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HireLawyerScreen())),

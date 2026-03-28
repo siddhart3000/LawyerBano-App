@@ -26,6 +26,33 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> _handlePostLogin(dynamic user) async {
+    if (user != null && mounted) {
+      setState(() => _isLoading = true);
+      final doc = await _authService.getUserData(user.uid);
+      setState(() => _isLoading = false);
+
+      if (doc != null && doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final role = data['role'];
+        if (role != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DashboardScreen(isLawyer: role == 'lawyer'),
+            ),
+          );
+          return;
+        }
+      }
+      // If no role is found, go to selection screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const UserChoiceScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,11 +134,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                           setState(() => _isLoading = false);
                           
-                          if (user != null && mounted) {
-                             Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => const UserChoiceScreen()),
-                            );
+                          if (user != null) {
+                             await _handlePostLogin(user);
                           } else if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Login failed.')),
@@ -143,11 +167,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     setState(() => _isLoading = true);
                     final user = await _authService.signInWithGoogle();
                     setState(() => _isLoading = false);
-                    if (user != null && mounted) {
-                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const UserChoiceScreen()),
-                      );
+                    if (user != null) {
+                       await _handlePostLogin(user);
                     }
                   },
                   icon: const Icon(Icons.login),

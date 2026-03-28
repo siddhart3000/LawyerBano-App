@@ -19,6 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _stateController = TextEditingController();
   final _districtController = TextEditingController();
   final _subDistrictController = TextEditingController();
@@ -41,7 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final data = doc.data() as Map<String, dynamic>;
           setState(() {
             _nameController.text = data['name'] ?? "";
-            _emailController.text = data['email'] ?? "";
+            _emailController.text = data['email'] ?? user.email ?? "";
+            _phoneController.text = data['phone'] ?? "";
             _bioController.text = data['bio'] ?? "";
             _stateController.text = data['state'] ?? "";
             _districtController.text = data['district'] ?? "";
@@ -76,6 +78,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (user != null) {
         await _authService.updateFullProfile(user.uid, {
           'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'phone': _phoneController.text.trim(),
           'bio': _bioController.text.trim(),
           'state': _stateController.text.trim(),
           'district': _districtController.text.trim(),
@@ -142,7 +146,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 32),
             _buildTextField(TranslationService.translate('full_name', effectiveLang), _nameController, Icons.person_outline),
             const SizedBox(height: 20),
-            _buildTextField(TranslationService.translate('email', effectiveLang), _emailController, Icons.email_outlined, enabled: false),
+            _buildTextField(TranslationService.translate('email', effectiveLang), _emailController, Icons.email_outlined),
+            const SizedBox(height: 20),
+            _buildTextField("Contact Number", _phoneController, Icons.phone_outlined, keyboardType: TextInputType.phone),
             const SizedBox(height: 20),
             _buildTextField("State", _stateController, Icons.map_outlined),
             const SizedBox(height: 20),
@@ -168,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {int maxLines = 1, bool enabled = true}) {
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon, {int maxLines = 1, bool enabled = true, TextInputType keyboardType = TextInputType.text}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -178,6 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           maxLines: maxLines,
           enabled: enabled,
+          keyboardType: keyboardType,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppTheme.goldenDawn.withOpacity(0.7)),
