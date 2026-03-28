@@ -26,7 +26,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
   final AuthService _authService = AuthService();
@@ -40,10 +40,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _refreshData();
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshData(); // Auto-refresh when app comes to foreground
+    }
+  }
+
   Future<void> _refreshData() async {
+    setState(() => _isLoadingVerdicts = true);
     if (!widget.isGuest) {
       await _fetchUserName();
       await _fetchTrialAnalytics();
@@ -54,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _todaysTrials = [];
       });
     }
-    _fetchVerdicts();
+    await _fetchVerdicts();
   }
 
   Future<void> _fetchUserName() async {
@@ -186,120 +201,125 @@ class _DashboardScreenState extends State<DashboardScreen> {
             colors: [AppTheme.midnightBlue, AppTheme.obsidianBlack, AppTheme.charcoalDeep],
           ),
         ),
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 180,
-              floating: false,
-              pinned: true,
-              automaticallyImplyLeading: false,
-              backgroundColor: Colors.transparent,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(TranslationService.translate('hello', effectiveLang), style: const TextStyle(color: AppTheme.goldenDawn, fontSize: 18, fontWeight: FontWeight.w300)),
-                            Text(
-                              _userName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.w900,
+        child: RefreshIndicator(
+          color: AppTheme.goldenDawn,
+          backgroundColor: AppTheme.charcoalDeep,
+          onRefresh: _refreshData,
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 180,
+                floating: false,
+                pinned: true,
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(TranslationService.translate('hello', effectiveLang), style: const TextStyle(color: AppTheme.goldenDawn, fontSize: 18, fontWeight: FontWeight.w300)),
+                              Text(
+                                _userName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            _buildLanguageToggle(langProvider),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                              icon: const Icon(Icons.menu_rounded, color: AppTheme.goldenDawn, size: 36),
                             ),
                           ],
                         ),
-                      ),
-                      Row(
-                        children: [
-                          _buildLanguageToggle(langProvider),
-                          const SizedBox(width: 12),
-                          IconButton(
-                            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                            icon: const Icon(Icons.menu_rounded, color: AppTheme.goldenDawn, size: 36),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(TranslationService.translate('search', effectiveLang), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.goldenDawn)),
+                      const SizedBox(height: 16),
+                      _buildSearchField(effectiveLang),
+                      const SizedBox(height: 32),
+
+                      Text(TranslationService.translate('categories', effectiveLang), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.goldenDawn)),
+                      const SizedBox(height: 16),
+                      if (widget.isGuest)
+                        _buildLockedCategories(effectiveLang)
+                      else
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildLuxuryCategoryCard(
+                                widget.isLawyer ? TranslationService.translate('find_client', effectiveLang) : TranslationService.translate('find_lawyer', effectiveLang),
+                                "Connect with top profiles...",
+                                Icons.gavel_rounded,
+                                0.7,
+                                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FindLawyerScreen())),
+                              ),
+                              _buildLuxuryCategoryCard(
+                                TranslationService.translate('legal_info', effectiveLang),
+                                "Comprehensive guides...",
+                                Icons.menu_book_rounded,
+                                0.4,
+                                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalInfoScreen())),
+                              ),
+                              _buildLuxuryCategoryCard(
+                                TranslationService.translate('upcoming_trials', effectiveLang),
+                                "Manage court dates...",
+                                Icons.event_note_rounded,
+                                0.2,
+                                () async {
+                                  final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const UpcomingTrialsScreen()));
+                                  if (result == true) _refreshData();
+                                }),
+                              _buildLuxuryCategoryCard(
+                                TranslationService.translate('hire_lawyer', effectiveLang),
+                                "Secure top legal counsel...",
+                                Icons.person_add_rounded,
+                                0.1,
+                                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HireLawyerScreen())),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      const SizedBox(height: 32),
+                      if (!widget.isGuest) _buildAnalyticalDashboard(effectiveLang),
+                      const SizedBox(height: 32),
+
+                      Text("Legal Updates", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.goldenDawn)),
+                      const SizedBox(height: 16),
+                      if (_isLoadingVerdicts)
+                        const Center(child: CircularProgressIndicator(color: AppTheme.goldenDawn))
+                      else
+                        ..._verdicts.map((v) => _buildVerdictCard(v)),
                     ],
                   ),
                 ),
               ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(TranslationService.translate('search', effectiveLang), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.goldenDawn)),
-                    const SizedBox(height: 16),
-                    _buildSearchField(effectiveLang),
-                    const SizedBox(height: 32),
-
-                    Text(TranslationService.translate('categories', effectiveLang), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.goldenDawn)),
-                    const SizedBox(height: 16),
-                    if (widget.isGuest)
-                      _buildLockedCategories(effectiveLang)
-                    else
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildLuxuryCategoryCard(
-                              widget.isLawyer ? TranslationService.translate('find_client', effectiveLang) : TranslationService.translate('find_lawyer', effectiveLang),
-                              "Connect with top profiles...",
-                              Icons.gavel_rounded,
-                              0.7,
-                              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FindLawyerScreen())),
-                            ),
-                            _buildLuxuryCategoryCard(
-                              TranslationService.translate('legal_info', effectiveLang),
-                              "Comprehensive guides...",
-                              Icons.menu_book_rounded,
-                              0.4,
-                              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalInfoScreen())),
-                            ),
-                            _buildLuxuryCategoryCard(
-                              TranslationService.translate('upcoming_trials', effectiveLang),
-                              "Manage court dates...",
-                              Icons.event_note_rounded,
-                              0.2,
-                              () async {
-                                final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const UpcomingTrialsScreen()));
-                                if (result == true) _refreshData();
-                              }),
-                            _buildLuxuryCategoryCard(
-                              TranslationService.translate('hire_lawyer', effectiveLang),
-                              "Secure top legal counsel...",
-                              Icons.person_add_rounded,
-                              0.1,
-                              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HireLawyerScreen())),
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 32),
-                    if (!widget.isGuest) _buildAnalyticalDashboard(effectiveLang),
-                    const SizedBox(height: 32),
-
-                    Text("Legal Updates", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.goldenDawn)),
-                    const SizedBox(height: 16),
-                    if (_isLoadingVerdicts)
-                      const Center(child: CircularProgressIndicator(color: AppTheme.goldenDawn))
-                    else
-                      ..._verdicts.map((v) => _buildVerdictCard(v)),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       drawer: _buildDrawer(context, effectiveLang),

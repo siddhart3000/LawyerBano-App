@@ -17,6 +17,7 @@ class LegalInfoScreen extends StatefulWidget {
 
 class _LegalInfoScreenState extends State<LegalInfoScreen> {
   List<dynamic> _allLegalInfo = [];
+  List<dynamic> _filteredInfo = [];
   final GrokService _grokService = GrokService();
   final TextEditingController _searchController = TextEditingController();
 
@@ -30,11 +31,20 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
     final String response = await rootBundle.loadString('assets/data/legal_info.json');
     final data = await json.decode(response);
     setState(() {
-      _allLegalInfo = data;
+      _allLegalInfo = data['types_of_law'];
+      _filteredInfo = data['types_of_law'];
     });
   }
 
-  void _handleSearch(String query, String langCode) async {
+  void _filterSearch(String query) {
+    setState(() {
+      _filteredInfo = _allLegalInfo
+          .where((info) => info['title'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void _handleAISearch(String query, String langCode) async {
     if (query.isEmpty) return;
     
     showModalBottomSheet(
@@ -80,54 +90,50 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
     final effectiveLang = langProvider.isHinglish ? 'hinglish' : langProvider.currentLocale.languageCode;
 
     return Scaffold(
-      backgroundColor: isDark ? AppTheme.obsidianBlack : Colors.white,
+      backgroundColor: AppTheme.obsidianBlack,
       appBar: AppBar(
-        title: Text(TranslationService.translate('legal_info', effectiveLang), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppTheme.midnightBlue,
-        foregroundColor: AppTheme.goldenDawn,
+        title: const Text("Legal Info", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.goldenDawn)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppTheme.goldenDawn),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: AppTheme.midnightBlue,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TranslationService.translate('types_of_law', effectiveLang),
-                    style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSearchField(effectiveLang),
-                ],
-              ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            decoration: const BoxDecoration(
+              color: AppTheme.midnightBlue,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.8,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Types of Law",
+                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
                 ),
-                itemCount: _allLegalInfo.length,
-                itemBuilder: (context, index) {
-                  final info = _allLegalInfo[index];
-                  return _buildLegalCard(info, isDark);
-                },
-              ),
+                const SizedBox(height: 20),
+                _buildSearchField(effectiveLang),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _filteredInfo.length,
+              itemBuilder: (context, index) {
+                return _buildLegalCard(_filteredInfo[index]);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -142,44 +148,32 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
       child: TextField(
         controller: _searchController,
         style: const TextStyle(color: Colors.white),
-        onSubmitted: (val) => _handleSearch(val, langCode),
-        decoration: InputDecoration(
-          hintText: '${TranslationService.translate('search', langCode)}...',
-          hintStyle: const TextStyle(color: Colors.white38),
-          prefixIcon: const Icon(Icons.search, color: AppTheme.goldenDawn),
+        onChanged: _filterSearch,
+        onSubmitted: (val) => _handleAISearch(val, langCode),
+        decoration: const InputDecoration(
+          hintText: 'Search or ask AI...',
+          hintStyle: TextStyle(color: Colors.white38),
+          prefixIcon: Icon(Icons.search, color: AppTheme.goldenDawn),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),
       ),
     );
   }
 
-  Widget _buildLegalCard(dynamic info, bool isDark) {
-    Color cardColor;
-    switch(info['color']) {
-      case 'blue': cardColor = Colors.blue.shade100; break;
-      case 'orange': cardColor = Colors.orange.shade100; break;
-      case 'green': cardColor = Colors.green.shade100; break;
-      case 'yellow': cardColor = Colors.yellow.shade100; break;
-      case 'deepPurple': cardColor = Colors.deepPurple.shade100; break;
-      case 'pink': cardColor = Colors.pink.shade100; break;
-      case 'teal': cardColor = Colors.teal.shade100; break;
-      case 'blueGrey': cardColor = Colors.blueGrey.shade100; break;
-      case 'brown': cardColor = Colors.brown.shade100; break;
-      case 'indigo': cardColor = Colors.indigo.shade100; break;
-      default: cardColor = Colors.grey.shade100;
-    }
+  Widget _buildLegalCard(dynamic info) {
+    // Parse color from JSON (e.g., "0xFF7B91B0")
+    Color bgColor = Color(int.parse(info['color']));
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.charcoalDeep : cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: isDark ? Border.all(color: cardColor.withOpacity(0.3)) : null,
+        color: bgColor,
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           )
         ],
       ),
@@ -189,45 +183,44 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
         children: [
           Row(
             children: [
-              Icon(_getIconData(info['icon']), color: isDark ? cardColor : Colors.black87, size: 24),
-              const SizedBox(width: 8),
+              Icon(_getIconData(info['icon']), color: Colors.black.withOpacity(0.7), size: 22),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   info['title'],
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: isDark ? Colors.white : Colors.black87,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: Colors.black87,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Expanded(
-            child: ListView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: (info['points'] as List).length,
-              itemBuilder: (context, i) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("• ", style: TextStyle(color: isDark ? cardColor : Colors.black54)),
-                      Expanded(
-                        child: Text(
-                          info['points'][i],
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: isDark ? Colors.white70 : Colors.black54,
-                          ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: (info['points'] as List).map((point) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("• ", style: TextStyle(color: Colors.black54, fontSize: 10)),
+                    Expanded(
+                      child: Text(
+                        point,
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          height: 1.2,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  ],
+                ),
+              )).toList(),
             ),
           ),
         ],
@@ -237,17 +230,17 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
 
   IconData _getIconData(String name) {
     switch(name) {
-      case 'gavel': return Icons.gavel;
-      case 'eco': return Icons.eco;
-      case 'account_balance': return Icons.account_balance;
-      case 'family_restroom': return Icons.family_restroom;
-      case 'business': return Icons.business;
-      case 'work': return Icons.work;
-      case 'history_edu': return Icons.history_edu;
-      case 'monetization_on': return Icons.monetization_on;
-      case 'copyright': return Icons.copyright;
-      case 'public': return Icons.public;
-      default: return Icons.info;
+      case 'gavel': return Icons.gavel_rounded;
+      case 'eco': return Icons.eco_rounded;
+      case 'balance': return Icons.account_balance_rounded;
+      case 'family_restroom': return Icons.family_restroom_rounded;
+      case 'business': return Icons.business_center_rounded;
+      case 'work': return Icons.work_rounded;
+      case 'account_balance': return Icons.museum_rounded;
+      case 'receipt_long': return Icons.receipt_long_rounded;
+      case 'copyright': return Icons.copyright_rounded;
+      case 'public': return Icons.public_rounded;
+      default: return Icons.info_rounded;
     }
   }
 }
